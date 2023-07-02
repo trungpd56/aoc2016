@@ -1,8 +1,9 @@
 import requests
 import os
 from pathlib import Path
+import sys
 
-day = 18
+day = int(sys.argv[1])
 cookies = {"session": os.environ["AOC_SESSION"]}
 
 # Download input
