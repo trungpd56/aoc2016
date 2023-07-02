@@ -18,7 +18,7 @@ def part1(line):
 def part2(line):
     i = 0
     pw = [" "] * 8
-    while any([c == " " for c in pw]):
+    while " " in pw:
         h = md5(f"{line}{i}".encode()).hexdigest()
         if h.startswith("00000"):
             pos = h[5]
