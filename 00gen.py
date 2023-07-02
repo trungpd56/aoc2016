@@ -2,7 +2,7 @@ import requests
 import os
 from pathlib import Path
 
-day = 14
+day = 15
 cookies = {"session": os.environ["AOC_SESSION"]}
 
 # Download input
