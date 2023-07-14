@@ -1,50 +1,66 @@
 #!/usr/bin/env python3
 
 from pathlib import Path
-from collections import defaultdict
+from collections import defaultdict, deque
 import math
 
+
+class Bot:
+    def __init__(self):
+        self.high: int = None
+        self.low: int = None
+        self.ltype: str = None
+        self.htype: str = None
+        self.chips: list[int] = []
+
+    @property
+    def ready(self):
+        return len(self.chips) == 2
+
+    def get_chip(self, c: int) -> None:
+        if c not in self.chips:
+            self.chips = sorted(self.chips + [c])
+
+
 lines = Path(Path(__file__).parent / "input10.txt").read_text().strip()
-init_lines = [line.split() for line in lines.split("\n") if line.startswith("value")]
-cmd_lines = [line.split() for line in lines.split("\n") if not line.startswith("value")]
+bots = defaultdict(Bot)
+for line in lines.splitlines():
+    t = line.split()
+    match t[0]:
+        case "value":
+            chip, bot = map(int, (t[1], t[-1]))
+            bots[bot].get_chip(chip)
+        case "bot":
+            ltype, htype = t[5], t[-2]
+            bot, low, high = map(int, (t[1], t[6], t[-1]))
+            bots[bot].ltype = ltype
+            bots[bot].htype = htype
+            bots[bot].low = low
+            bots[bot].high = high
 
-stacks = []
-bots = defaultdict(list)
-outputs = defaultdict(list)
-cmds = defaultdict(list)
-for line in init_lines:
-    value, bot = int(line[1]), int(line[-1])
-    bots[bot].append(value)
-    if len(bots[bot]) == 2:
-        stacks.append(bot)
-
-for line in cmd_lines:
-    if line[0] == "bot":
-        bot = int(line[1])
-        cmds[bot].extend((line[5], int(line[6]), line[10], int(line[11])))
-    else:
-        assert False
-
-while stacks:
-    name = stacks.pop()
-    low, high = sorted(bots[name])
-    if low == 17 and high == 61:
-        part1 = name
-    low_name, low_num, high_name, high_num = cmds[name]
-    if low_name == "bot":
-        bots[low_num].append(low)
-        if len(bots[low_num]) == 2:
-            stacks.append(low_num)
-    else:
-        outputs[low_num].append(low)
-    if high_name == "bot":
-        bots[high_num].append(high)
-        if len(bots[high_num]) == 2:
-            stacks.append(high_num)
-    else:
-        outputs[high_num].append(high)
-
+queue = deque(botnum for botnum, bot in bots.items() if bot.ready)
+outputs = [None] * 3
+targets = [17, 61]
+while queue:
+    botnum = queue.popleft()
+    bot = bots[botnum]
+    if not bot.ready:
+        continue
+    if bot.chips == targets:
+        part1 = botnum
+    if bot.ltype == "bot":
+        bots[bot.low].get_chip(bot.chips[0])
+        queue.append(bot.low)
+    elif bot.low < 3:
+        outputs[bot.low] = bot.chips[0]
+    if bot.htype == "bot":
+        bots[bot.high].get_chip(bot.chips[1])
+        queue.append(bot.high)
+    elif bot.high < 3:
+        outputs[bot.high] = bot.chips[1]
+    if all(o is not None for o in outputs):
+        part2 = math.prod(outputs)
+        break
 
 print(f"Part 1: {part1}")
-part2 = math.prod(outputs[i][0] for i in range(3))
 print(f"Part 2: {part2}")
